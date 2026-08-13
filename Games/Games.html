@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chithruka - Game Streaming</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+    
+    <style>
+        :root {
+            --netflix-red: #E50914;
+            --netflix-dark: #141414;
+            --netflix-black: #000000;
+            --text-white: #ffffff;
+            --text-gray: #b3b3b3;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--netflix-dark);
+            color: var(--text-white);
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            padding-bottom: 50px;
+        }
+
+        /* --- Header / Navbar --- */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 4%;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%);
+            transition: background-color 0.3s;
+        }
+
+        header.scrolled {
+            background-color: var(--netflix-dark);
+        }
+
+        .logo {
+            font-family: 'Bebas Neue', sans-serif;
+            color: var(--netflix-red);
+            font-size: 2.5rem;
+            letter-spacing: 2px;
+            text-decoration: none;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .search-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            background: rgba(0,0,0,0.7);
+            border: 1px solid var(--text-gray);
+            padding: 5px 10px;
+            border-radius: 4px; /* Netflix uses square buttons mostly, but slight radius handles mobile better */
+        }
+
+        .search-container input {
+            background: transparent;
+            border: none;
+            color: white;
+            padding: 5px;
+            font-size: 1rem;
+            outline: none;
+            width: 0;
+            transition: width 0.4s ease;
+            cursor: pointer;
+        }
+
+        .search-container:hover input, .search-container input:focus, .search-container input:not(:placeholder-shown) {
+            width: 200px;
+            cursor: text;
+        }
+
+        .search-btn {
+            background: transparent;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        /* --- Hero Section --- */
+        .hero {
+            height: 70vh;
+            position: relative;
+            display: flex;
+            align-items: center;
+            padding-left: 4%;
+            background-image: linear-gradient(to right, rgba(20,20,20,1) 10%, rgba(20,20,20,0) 50%), url('https://playgama.com/cdn-cgi/imagedelivery/LN2S-4p3-GgZvEx3IPaKUA/c1f0c7c3-3611-4f93-49ae-3b779e216c00/enlarged');
+            background-size: cover;
+            background-position: center;
+        }
+
+        .hero-content {
+            max-width: 500px;
+            z-index: 2;
+        }
+
+        .hero-title {
+            width: 100%;
+        }
+
+        .hero-desc {
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            text-shadow: 1px 1px 2px black;
+        }
+
+        .btn-play {
+            background-color: white;
+            color: black;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: opacity 0.2s;
+        }
+
+        .btn-play:hover {
+            opacity: 0.8;
+        }
+
+        /* --- Game Rows --- */
+        .category-title {
+            margin: 30px 4% 10px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #e5e5e5;
+        }
+
+        .row-container {
+            display: flex;
+            overflow-x: auto;
+            padding: 10px 4%;
+            gap: 10px;
+            scrollbar-width: none; /* Firefox */
+        }
+        
+        .row-container::-webkit-scrollbar {
+            display: none; /* Chrome/Safari */
+        }
+
+        .game-card {
+            flex: 0 0 auto;
+            width: 250px;
+            aspect-ratio: 16/9;
+            position: relative;
+            border-radius: 4px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.3s ease, z-index 0.3s;
+        }
+
+        .game-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .game-card:hover {
+            transform: scale(1.1);
+            z-index: 10;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+        }
+
+        .card-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 10px;
+            background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .game-card:hover .card-info {
+            opacity: 1;
+        }
+
+        .card-title {
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        /* --- Search Results Area --- */
+        #search-results {
+            display: none;
+            padding: 80px 4%;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        #search-results.active {
+            display: grid;
+        }
+        
+        #main-view.hidden {
+            display: none;
+        }
+
+        /* --- Game Modal / Player --- */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.95);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            width: 90%;
+            height: 80%;
+            max-width: 1000px;
+            background: #000;
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #333;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: #fff;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 2001;
+        }
+
+        .modal-content iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Helper for the raw script games */
+        .script-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: white; /* Some script games need white bg */
+        }
+
+        /* --- Mobile Responsiveness --- */
+        @media (max-width: 768px) {
+            .game-card { width: 160px; }
+            .search-container input:focus { width: 120px; }
+            .logo { font-size: 1.8rem; }
+        }
+        /* --- DESKTOP SIDEBAR --- */
+.sidebar {
+    position: fixed; left: 0; top: 0; height: 100%;
+    background: rgba(0, 0, 0, 0.95); backdrop-filter: blur(20px);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 9999; transition: width 0.3s ease;
+    width: 64px; overflow: hidden; display: none; flex-direction: column;
+}
+.sidebar:hover { width: 240px; }
+.sidebar-header { height: 70px; display: flex; align-items: center; padding-left: 18px; }
+.sidebar-menu { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; padding: 0 8px; width: 240px; list-style: none; }
+.nav-link { 
+    display: flex; align-items: center; padding: 12px; border-radius: 12px;
+    color: #9ca3af; text-decoration: none; transition: 0.3s;
+}
+.nav-link i { font-size: 1.2rem; min-width: 30px; text-align: center; }
+.nav-link .nav-text { margin-left: 15px; opacity: 0; white-space: nowrap; }
+.sidebar:hover .nav-text { opacity: 1; }
+.nav-link:hover, .nav-link.active { background: rgba(229, 9, 20, 0.1); color: #e50914; }
+
+/* --- REDESIGNED MOBILE NAVIGATION --- */
+.mobile-nav {
+    position: fixed; bottom: 0; left: 0; width: 100%; height: 70px;
+    background: rgba(10, 10, 10, 0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255, 255, 255, 0.1); display: flex; align-items: center; justify-content: center;
+    z-index: 9999;
+}
+.nav-wrapper { display: flex; width: 100%; justify-content: space-around; padding: 0; margin: 0; }
+.mobile-item { list-style: none; flex: 1; padding: 0 4px; }
+.mobile-item a, .mobile-item button { 
+    height: 58px; width: 100%; margin: 6px 0; border-radius: 14px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; text-decoration: none; 
+    color: #9ca3af; transition: all 0.3s ease; background: transparent; border: none; cursor: pointer;
+}
+.mobile-item.active a, .mobile-item.active button,
+.mobile-item a:hover, .mobile-item button:hover { color: #e50914; background: rgba(229, 9, 20, 0.1); }
+.mobile-item.active a i, .mobile-item.active button i { transform: scale(1.15); }
+.mobile-item span { font-size: 0; opacity: 0; transition: all 0.3s ease; }
+.mobile-item.active span, .mobile-item:hover span { font-size: 12px; opacity: 1; margin-top: 4px; }
+
+/* --- MOBILE MORE DRAWER --- */
+#mobile-more-drawer {
+    position: fixed; bottom: 70px; left: 0; width: 100%;
+    background: rgba(15, 15, 15, 0.95); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px 20px 0 0;
+    transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 9998; padding: 25px 20px 35px 20px; visibility: hidden;
+}
+#mobile-more-drawer.open { transform: translateY(0); visibility: visible; }
+.drawer-link {
+    display: flex; align-items: center; padding: 14px 18px; border-radius: 12px; gap: 12px;
+    color: #e5e7eb; text-decoration: none; font-weight: 600; background: rgba(255, 255, 255, 0.03); 
+    border: 1px solid rgba(255, 255, 255, 0.05); transition: all 0.2s;
+}
+.drawer-link:hover, .drawer-link:active { background: rgba(229, 9, 20, 0.15); border-color: rgba(229, 9, 20, 0.3); color: #fff; }
+
+/* SVG Icons */
+.nav-svg { width: 24px; height: 24px; display: block; fill: currentColor; transition: transform 0.2s ease; }
+
+/* --- LAYOUT ADJUSTMENTS FOR GAMES.HTML --- */
+@media (min-width: 768px) { 
+    .sidebar { display: flex; } 
+    .mobile-nav, #mobile-more-drawer { display: none; } 
+    body { padding-left: 64px; }
+    /* Shifts the existing top header so it doesn't hide behind the sidebar */
+    header#navbar { padding-left: calc(4% + 64px); } 
+}
+@media (max-width: 767px) { 
+    body { padding-bottom: 70px; } 
+}
+    </style>
+</head>
+<body>
+<aside class="sidebar">
+    <div class="sidebar-header">
+        <div class="menu-icon">
+            <svg stroke="#e50914" fill="#e50914" stroke-width="0" viewBox="0 0 24 24" height="28px" width="28px" xmlns="http://www.w3.org/2000/svg">
+                <path d="M16 18V20H5V18H16ZM21 11V13H3V11H21ZM19 4V6H8V4H19Z"></path>
+            </svg>
+        </div>
+    </div>
+    
+    <ul class="sidebar-menu">
+        <li><a href="../index.html" class="nav-link"><svg viewBox="0 0 24 24" fill="currentColor" class="nav-svg"><path d="M20 20C20 20.5523 19.5523 21 19 21H5C4.44772 21 4 20.5523 4 20V11L1 11L11.3273 1.6115C11.7087 1.26475 12.2913 1.26475 12.6727 1.6115L23 11L20 11V20ZM8 15V17H16V15H8Z"></path></svg><span class="nav-text">Home</span></a></li>
+        <li><a href="../Anime/anime.html" class="nav-link"><svg viewBox="0 0 24 24" fill="currentColor" class="nav-svg"><path d="M12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2ZM12 4C7.58172 4 4 7.58172 4 12C4 16.4183 7.58172 20 12 20C16.4183 20 20 16.4183 20 12C20 7.58172 16.4183 4 12 4ZM12 7C14.7614 7 17 9.23858 17 12C17 14.7614 14.7614 17 12 17C9.23858 17 7 14.7614 7 12C7 11.4872 7.07719 10.9925 7.22057 10.5268C7.61175 11.3954 8.48527 12 9.5 12C10.8807 12 12 10.8807 12 9.5C12 8.48527 11.3954 7.61175 10.5269 7.21995C10.9925 7.07719 11.4872 7 12 7Z"></path></svg><span class="nav-text">Anime</span></a></li>
+        <li><a href="../download.html" class="nav-link"><svg viewBox="0 0 24 24" fill="currentColor" class="nav-svg"><path d="M12 20H20V22H12C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12C22 14.2512 21.2561 16.3287 20.0007 18H17.2916C18.9525 16.5341 20 14.3894 20 12C20 7.58172 16.4183 4 12 4C7.58172 4 4 7.58172 4 12C4 16.4183 7.58172 20 12 20ZM12 10C10.8954 10 10 9.10457 10 8C10 6.89543 10.8954 6 12 6C13.1046 6 14 6.89543 14 8C14 9.10457 13.1046 10 12 10ZM8 14C6.89543 14 6 13.1046 6 12C6 10.8954 6.89543 10 8 10C9.10457 10 10 10.8954 10 12C10 13.1046 9.10457 14 8 14ZM16 14C14.8954 14 14 13.1046 14 12C14 10.8954 14.8954 10 16 10C17.1046 10 18 10.8954 18 12C18 13.1046 17.1046 14 16 14ZM12 18C10.8954 18 10 17.1046 10 16C10 14.8954 10.8954 14 12 14C13.1046 14 14 14.8954 14 16C14 17.1046 13.1046 18 12 18Z"></path></svg><span class="nav-text">Dubbings</span></a></li>
+        <li><a href="../TV/tv.html" class="nav-link"><svg viewBox="0 0 24 24" fill="currentColor" class="nav-svg"><path d="M15.4142 4.99998H21.0082C21.556 4.99998 22 5.44461 22 6.00085V19.9991C22 20.5519 21.5447 21 21.0082 21H2.9918C2.44405 21 2 20.5553 2 19.9991V6.00085C2 5.44808 2.45531 4.99998 2.9918 4.99998H8.58579L6.05025 2.46445L7.46447 1.05023L11.4142 4.99998H12.5858L16.5355 1.05023L17.9497 2.46445L15.4142 4.99998ZM4 6.99998V19H20V6.99998H4Z"></path></svg><span class="nav-text">Live TV</span></a></li>
+        <li><a href="../Sports/sports.html" class="nav-link"><svg viewBox="0 0 24 24" fill="currentColor" class="nav-svg"><path d="M19.9887 11.5716C19.9029 9.94513 19.3313 8.44745 18.4163 7.22097C18.1749 7.48407 17.8785 7.7698 17.4957 8.09159C16.5881 8.85458 15.4887 9.54307 14.1834 10.101C14.3498 10.4506 14.5029 10.7899 14.6376 11.1098L14.6388 11.1125C14.6652 11.1742 14.6879 11.2306 14.7321 11.3418C14.7379 11.3562 14.7433 11.3697 14.7485 11.3825C16.2621 11.2122 17.8576 11.2749 19.4049 11.4845C19.6106 11.5123 19.805 11.5415 19.9887 11.5716ZM10.6044 4.1213C10.7783 4.36621 10.9602 4.62859 11.1803 4.95378C11.7929 5.8589 12.396 6.81391 12.9604 7.79507C13.0749 7.99416 13.187 8.19289 13.2964 8.39112C14.5193 7.90993 15.5296 7.30281 16.3438 6.62486C16.6731 6.35063 16.9383 6.093 17.1403 5.86972C15.7501 4.70277 13.9571 4 12 4C11.524 4 11.0576 4.04158 10.6044 4.1213ZM4.25266 9.99755C4.83145 9.98452 5.48467 9.94941 6.29303 9.87518C7.90024 9.72758 9.54141 9.46249 11.1549 9.05274C10.5719 8.03721 9.93888 7.02331 9.29452 6.05378C8.98479 5.58775 8.68357 5.14992 8.45484 4.82642C6.39541 5.84613 4.83794 7.72658 4.25266 9.99755ZM5.78366 17.036C6.17111 16.4693 6.68061 15.8314 7.35797 15.1374C8.81199 13.6478 10.5286 12.4878 12.5139 11.8473C12.5417 11.8391 12.5604 11.8336 12.576 11.829C12.411 11.4651 12.2562 11.1405 12.1003 10.8342C10.2643 11.3687 8.3303 11.703 6.40279 11.8762C5.46319 11.9606 4.62005 11.9981 4 12.0044C4.00102 13.9112 4.66915 15.662 5.78366 17.036ZM15.0045 19.4166C14.9001 18.8745 14.7669 18.2706 14.5899 17.574C14.2689 16.3112 13.8668 15.012 13.373 13.7078C11.3712 14.4343 9.77574 15.4974 8.54309 16.7649C7.94904 17.3757 7.51244 17.9537 7.22642 18.4203C8.55892 19.4127 10.2109 20 12 20C13.0626 20 14.0769 19.7928 15.0045 19.4166ZM16.8778 18.3414C18.4073 17.1632 19.4985 15.444 19.8652 13.4703C19.5253 13.3865 19.094 13.3005 18.6196 13.2346C17.5756 13.0897 16.5014 13.0655 15.4409 13.2018C15.8933 14.4764 16.2642 15.7332 16.5608 16.9361C16.6903 17.4614 16.7958 17.9358 16.8778 18.3414ZM12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22Z"></path></svg><span class="nav-text">Sports</span></a></li>
+        <li><a href="#" class="nav-link active"><svg viewBox="0 0 512 512" fill="currentColor" class="nav-svg" xmlns="http://www.w3.org/2000/svg">
+    <path d="M340.693,55.787 L256,106.624 L171.307,55.787 c-14.72,-8.832-33.152-8.832-43.947,0 l-106.667,64 c-13.12,7.872-20.693,22.144-20.693,36.608 v156.587 c0,14.464,7.573,28.736,20.693,36.587 l213.333,128 c13.525,8.107,30.421,8.107,43.947,0 l213.333-128 c13.12-7.851,20.693-22.123,20.693-36.587 V156.395 c0-14.464-7.573-28.736-20.693-36.587 l-106.667-64 C373.845,46.955,355.413,46.955,340.693,55.787 Z M256,156.373 l106.667-64 l106.667,64 v156.587 l-213.333,128 l-213.333-128 V156.373 l106.667-64 L256,156.373 Z M149.333,160 c-11.776,0-21.333,9.557-21.333,21.333 v32.043 H96 c-11.782,0-21.333,9.551-21.333,21.333 s9.551,21.333,21.333,21.333 h32v32.043 c0,11.782,9.551,21.333,21.333,21.333 s21.333-9.551,21.333-21.333 v-31.957 h32 c11.782,0,21.333-9.551,21.333-21.333 s-9.551-21.333-21.333-21.333 h-32 v-32.043 C170.667,169.557,161.109,160,149.333,160 Z M394.667,192.043 c-17.664,0-32,14.336-32,32 s14.336,32,32,32 s32-14.336,32-32 S412.331,192.043,394.667,192.043 Z M309.333,234.709 c-17.664,0-32,14.336-32,32 s14.336,32,32,32 s32-14.336,32-32 S326.997,234.709,309.333,234.709 Z"/>
+</svg><span class="nav-text">Games</span></a></li>
+        <li><a href="../Radio/radio.html" class="nav-link"><svg viewBox="0 0 24 24" fill="currentColor" class="nav-svg"><path d="M6 3V1H8V3H21.0082C21.556 3 22 3.44495 22 3.9934V20.0066C22 20.5552 21.5447 21 21.0082 21H2.9918C2.44405 21 2 20.5551 2 20.0066V3.9934C2 3.44476 2.45531 3 2.9918 3H6ZM4 5V19H20V5H4ZM9 15C7.34315 15 6 13.6569 6 12C6 10.3431 7.34315 9 9 9C10.6569 9 12 10.3431 12 12C12 13.6569 10.6569 15 9 15ZM14 9H18V11H14V9ZM14 13H18V15H14V13Z"></path></svg><span class="nav-text">Radio</span></a></li>
+        <li><a href="../Books/Books.html" class="nav-link"><svg viewBox="0 0 24 24" fill="currentColor" class="nav-svg"><path d="M13 21V23H11V21H3C2.44772 21 2 20.5523 2 20V4C2 3.44772 2.44772 3 3 3H9C10.1947 3 11.2671 3.52375 12 4.35418C12.7329 3.52375 13.8053 3 15 3H21C21.5523 3 22 3.44772 22 4V20C22 20.5523 21.5523 21 21 21H13ZM20 19V5H15C13.8954 5 13 5.89543 13 7V19H20ZM11 19V7C11 5.89543 10.1046 5 9 5H4V19H11Z"></path></svg><span class="nav-text">Books</span></a></li>
+    </ul>
+</aside>
+
+<nav class="mobile-nav">
+    <ul class="nav-wrapper">
+        <li class="mobile-item"><a href="../index.html"><svg viewBox="0 0 24 24" fill="currentColor" class="nav-svg"><path d="M20 20C20 20.5523 19.5523 21 19 21H5C4.44772 21 4 20.5523 4 20V11L1 11L11.3273 1.6115C11.7087 1.26475 12.2913 1.26475 12.6727 1.6115L23 11L20 11V20ZM8 15V17H16V15H8Z"></path></svg><span>Home</span></a></li>
+        <li class="mobile-item"><a href="../Anime/anime.html"><svg viewBox="0 0 24 24" fill="currentColor" class="nav-svg"><path d="M12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2ZM12 4C7.58172 4 4 7.58172 4 12C4 16.4183 7.58172 20 12 20C16.4183 20 20 16.4183 20 12C20 7.58172 16.4183 4 12 4ZM12 7C14.7614 7 17 9.23858 17 12C17 14.7614 14.7614 17 12 17C9.23858 17 7 14.7614 7 12C7 11.4872 7.07719 10.9925 7.22057 10.5268C7.61175 11.3954 8.48527 12 9.5 12C10.8807 12 12 10.8807 12 9.5C12 8.48527 11.3954 7.61175 10.5269 7.21995C10.9925 7.07719 11.4872 7 12 7Z"></path></svg><span>Anime</span></a></li>
+        <li class="mobile-item"><a href="../TV/tv.html"><svg viewBox="0 0 24 24" fill="currentColor" class="nav-svg"><path d="M15.4142 4.99998H21.0082C21.556 4.99998 22 5.44461 22 6.00085V19.9991C22 20.5519 21.5447 21 21.0082 21H2.9918C2.44405 21 2 20.5553 2 19.9991V6.00085C2 5.44808 2.45531 4.99998 2.9918 4.99998H8.58579L6.05025 2.46445L7.46447 1.05023L11.4142 4.99998H12.5858L16.5355 1.05023L17.9497 2.46445L15.4142 4.99998ZM4 6.99998V19H20V6.99998H4Z"></path></svg><span>Live TV</span></a></li>
+        <li class="mobile-item active"><a href="#"><svg viewBox="0 0 512 512" fill="currentColor" class="nav-svg" xmlns="http://www.w3.org/2000/svg">
+    <path d="M340.693,55.787 L256,106.624 L171.307,55.787 c-14.72,-8.832-33.152-8.832-43.947,0 l-106.667,64 c-13.12,7.872-20.693,22.144-20.693,36.608 v156.587 c0,14.464,7.573,28.736,20.693,36.587 l213.333,128 c13.525,8.107,30.421,8.107,43.947,0 l213.333-128 c13.12-7.851,20.693-22.123,20.693-36.587 V156.395 c0-14.464-7.573-28.736-20.693-36.587 l-106.667-64 C373.845,46.955,355.413,46.955,340.693,55.787 Z M256,156.373 l106.667-64 l106.667,64 v156.587 l-213.333,128 l-213.333-128 V156.373 l106.667-64 L256,156.373 Z M149.333,160 c-11.776,0-21.333,9.557-21.333,21.333 v32.043 H96 c-11.782,0-21.333,9.551-21.333,21.333 s9.551,21.333,21.333,21.333 h32v32.043 c0,11.782,9.551,21.333,21.333,21.333 s21.333-9.551,21.333-21.333 v-31.957 h32 c11.782,0,21.333-9.551,21.333-21.333 s-9.551-21.333-21.333-21.333 h-32 v-32.043 C170.667,169.557,161.109,160,149.333,160 Z M394.667,192.043 c-17.664,0-32,14.336-32,32 s14.336,32,32,32 s32-14.336,32-32 S412.331,192.043,394.667,192.043 Z M309.333,234.709 c-17.664,0-32,14.336-32,32 s14.336,32,32,32 s32-14.336,32-32 S326.997,234.709,309.333,234.709 Z"/>
+</svg><span>Games</span></a></li>
+        <li class="mobile-item" id="more-menu-btn">
+            <button onclick="toggleMoreMenu()">
+                <svg viewBox="0 0 24 24" fill="currentColor" class="nav-svg"><path d="M16 18V20H5V18H16ZM21 11V13H3V11H21ZM19 4V6H8V4H19Z"></path></svg><span>More</span>
+            </button>
+        </li>
+    </ul>
+</nav>
+
+<div id="mobile-more-drawer">
+    <div class="drawer-header">
+        <h3 style="color:white; font-weight:bold; padding: 0 8px; border-left: 4px solid #e50914; margin-bottom: 16px;">EXPLORE MORE</h3>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:8px;">
+        <a href="../download.html" class="drawer-link"><svg viewBox="0 0 24 24" fill="currentColor" class="nav-svg"><path d="M12 20H20V22H12C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12C22 14.2512 21.2561 16.3287 20.0007 18H17.2916C18.9525 16.5341 20 14.3894 20 12C20 7.58172 16.4183 4 12 4C7.58172 4 4 7.58172 4 12C4 16.4183 7.58172 20 12 20ZM12 10C10.8954 10 10 9.10457 10 8C10 6.89543 10.8954 6 12 6C13.1046 6 14 6.89543 14 8C14 9.10457 13.1046 10 12 10ZM8 14C6.89543 14 6 13.1046 6 12C6 10.8954 6.89543 10 8 10C9.10457 10 10 10.8954 10 12C10 13.1046 9.10457 14 8 14ZM16 14C14.8954 14 14 13.1046 14 12C14 10.8954 14.8954 10 16 10C17.1046 10 18 10.8954 18 12C18 13.1046 17.1046 14 16 14ZM12 18C10.8954 18 10 17.1046 10 16C10 14.8954 10.8954 14 12 14C13.1046 14 14 14.8954 14 16C14 17.1046 13.1046 18 12 18Z"></path></svg> <span>Dubbings</span></a>
+        <a href="../Sports/sports.html" class="drawer-link"><svg viewBox="0 0 24 24" fill="currentColor" class="nav-svg"><path d="M19.9887 11.5716C19.9029 9.94513 19.3313 8.44745 18.4163 7.22097C18.1749 7.48407 17.8785 7.7698 17.4957 8.09159C16.5881 8.85458 15.4887 9.54307 14.1834 10.101C14.3498 10.4506 14.5029 10.7899 14.6376 11.1098L14.6388 11.1125C14.6652 11.1742 14.6879 11.2306 14.7321 11.3418C14.7379 11.3562 14.7433 11.3697 14.7485 11.3825C16.2621 11.2122 17.8576 11.2749 19.4049 11.4845C19.6106 11.5123 19.805 11.5415 19.9887 11.5716ZM10.6044 4.1213C10.7783 4.36621 10.9602 4.62859 11.1803 4.95378C11.7929 5.8589 12.396 6.81391 12.9604 7.79507C13.0749 7.99416 13.187 8.19289 13.2964 8.39112C14.5193 7.90993 15.5296 7.30281 16.3438 6.62486C16.6731 6.35063 16.9383 6.093 17.1403 5.86972C15.7501 4.70277 13.9571 4 12 4C11.524 4 11.0576 4.04158 10.6044 4.1213ZM4.25266 9.99755C4.83145 9.98452 5.48467 9.94941 6.29303 9.87518C7.90024 9.72758 9.54141 9.46249 11.1549 9.05274C10.5719 8.03721 9.93888 7.02331 9.29452 6.05378C8.98479 5.58775 8.68357 5.14992 8.45484 4.82642C6.39541 5.84613 4.83794 7.72658 4.25266 9.99755ZM5.78366 17.036C6.17111 16.4693 6.68061 15.8314 7.35797 15.1374C8.81199 13.6478 10.5286 12.4878 12.5139 11.8473C12.5417 11.8391 12.5604 11.8336 12.576 11.829C12.411 11.4651 12.2562 11.1405 12.1003 10.8342C10.2643 11.3687 8.3303 11.703 6.40279 11.8762C5.46319 11.9606 4.62005 11.9981 4 12.0044C4.00102 13.9112 4.66915 15.662 5.78366 17.036ZM15.0045 19.4166C14.9001 18.8745 14.7669 18.2706 14.5899 17.574C14.2689 16.3112 13.8668 15.012 13.373 13.7078C11.3712 14.4343 9.77574 15.4974 8.54309 16.7649C7.94904 17.3757 7.51244 17.9537 7.22642 18.4203C8.55892 19.4127 10.2109 20 12 20C13.0626 20 14.0769 19.7928 15.0045 19.4166ZM16.8778 18.3414C18.4073 17.1632 19.4985 15.444 19.8652 13.4703C19.5253 13.3865 19.094 13.3005 18.6196 13.2346C17.5756 13.0897 16.5014 13.0655 15.4409 13.2018C15.8933 14.4764 16.2642 15.7332 16.5608 16.9361C16.6903 17.4614 16.7958 17.9358 16.8778 18.3414ZM12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22Z"></path></svg><span>Sports</span></a>
+        <a href="../Radio/radio.html" class="drawer-link"><svg viewBox="0 0 24 24" fill="currentColor" class="nav-svg"><path d="M6 3V1H8V3H21.0082C21.556 3 22 3.44495 22 3.9934V20.0066C22 20.5552 21.5447 21 21.0082 21H2.9918C2.44405 21 2 20.5551 2 20.0066V3.9934C2 3.44476 2.45531 3 2.9918 3H6ZM4 5V19H20V5H4ZM9 15C7.34315 15 6 13.6569 6 12C6 10.3431 7.34315 9 9 9C10.6569 9 12 10.3431 12 12C12 13.6569 10.6569 15 9 15ZM14 9H18V11H14V9ZM14 13H18V15H14V13Z"></path></svg> <span>Radio</span></a>
+        <a href="../Books/Books.html" class="drawer-link"><svg viewBox="0 0 24 24" fill="currentColor" class="nav-svg"><path d="M13 21V23H11V21H3C2.44772 21 2 20.5523 2 20V4C2 3.44772 2.44772 3 3 3H9C10.1947 3 11.2671 3.52375 12 4.35418C12.7329 3.52375 13.8053 3 15 3H21C21.5523 3 22 3.44772 22 4V20C22 20.5523 21.5523 21 21 21H13ZM20 19V5H15C13.8954 5 13 5.89543 13 7V19H20ZM11 19V7C11 5.89543 10.1046 5 9 5H4V19H11Z"></path></svg> <span>Books</span></a>
+    </div>
+</div>
+    <header id="navbar">
+        <a href="#" class="logo" onclick="resetHome()">CHITHRUKA</a>
+        <div class="search-container">
+            <button class="search-btn"><i class="fa-solid fa-search"></i></button>
+            <input type="text" id="searchInput" placeholder="Titles, people, genres">
+        </div>
+    </header>
+
+    <div id="main-view">
+        <div class="hero">
+            <div class="hero-content">
+                <img class="hero-title" src="https://rawg.io/assets/images/games.4423d0579639f1241bc49dbc7e65f7ac.png" alt="" srcset="">
+                <p class="hero-desc">Experience intense tactical combat in this high-octane online shooter. Dominate the battlefield now.</p>
+                <button class="btn-play" onclick="playGame(9)">
+                    <i class="fa-solid fa-play"></i> Play
+                </button>
+                <button class="btn-play" style="background:rgba(109, 109, 110, 0.7); color: white; margin-left: 10px;" onclick="showMoreInfo('cyberpunk-2077')">
+    <i class="fa-solid fa-circle-info"></i> More Info
+</button>
+            </div>
+        </div>
+
+        <h3 class="category-title">Trending Now</h3>
+        <div class="row-container" id="row-trending">
+            </div>
+<h3 class="category-title">Latest Free Web Games</h3>
+<div class="row-container" id="row-f2p">
+    </div>
+        <h3 class="category-title">Action & Adventure</h3>
+        <div class="row-container" id="row-action">
+            </div>
+
+        <h3 class="category-title">Strategy & Puzzle</h3>
+        <div class="row-container" id="row-strategy">
+            </div>
+    </div>
+
+    <div id="search-results">
+        </div>
+
+    <div id="gameModal" class="modal">
+        <span class="close-modal" onclick="closeGame()">&times;</span>
+        <div class="modal-content" id="modalBody">
+            </div>
+    </div>
+
+    <script>
+        // Game Database
+        const games = [
+            {
+                id: 1,
+                title: "Ninja Breakout",
+                category: "action",
+                poster: "https://www.htmlgames.com/uploaded/game/thumb800/ninjabreakout800450.webp",
+                type: "script",
+                code: `<iframe src="https://htmlgames.com/NinjaBreakout/" width="100%" height="100%" frameborder="0"></iframe>` 
+            },
+            {
+                id: 2,
+                title: "Bus Puzzle",
+                category: "strategy",
+                poster: "https://www.htmlgames.com/uploaded/game/thumb800/buspuzzle800450.webp",
+                type: "script",
+                code: `<iframe src="https://htmlgames.com/BusPuzzle/" width="100%" height="100%" frameborder="0"></iframe>`
+            },
+            {
+                id: 3,
+                title: "Super Mario Bros",
+                category: "classic",
+                poster: "https://enam.mariogames.be/articles/title-screen.png",
+                type: "iframe",
+                url: "https://www.mariogames.be/Super_Mario_Bros_Game"
+            },
+            {
+                id: 4,
+                title: "Sri Lankan Pol. Mario",
+                category: "trending",
+                poster: "https://i.ytimg.com/vi/uaJ1pFVaXw0/hq720.jpg",
+                type: "iframe",
+                url: "https://chithruka.github.io/Mahi-Run/"
+            },
+            {
+                id: 5,
+                title: "Cat Survivors",
+                category: "action",
+                poster: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTL1wHXptDooOXV1p0b_LdIFo1QRgGttGGAK-jSWkudJQ&s",
+                type: "iframe",
+                url: "https://play.js13kgames.com/cat-survivors/"
+            },
+            {
+                id: 6,
+                title: "Gas Station Simulator",
+                category: "trending",
+                poster: "https://playgama.com/cdn-cgi/imagedelivery/LN2S-4p3-GgZvEx3IPaKUA/5efc382f-b4f3-45c6-86e9-de1cd4015300/w=800,fit=cover",
+                type: "iframe",
+                url: "https://playgama.com/export/game/gas-station-simulator",
+                attributes: "allow=fullscreen; accelerometer; camera; clipboard-read; clipboard-write; screen-wake-lock; speaker-selection; web-share; geolocation; gyroscope; microphone; xr-spatial-tracking; autoplay; encrypted-media; picture-in-picture"
+            },
+            {
+                id: 7,
+                title: "Stickman Kombat 2D",
+                category: "action",
+                poster: "https://playgama.com/cdn-cgi/imagedelivery/LN2S-4p3-GgZvEx3IPaKUA/0c888413-a125-4ef5-56cd-89a6a329e900/enlarged",
+                type: "iframe",
+                url: "https://playgama.com/export/game/stickman-kombat-2d",
+                attributes: "allow=fullscreen; accelerometer; camera; clipboard-read; clipboard-write; screen-wake-lock; speaker-selection; web-share; geolocation; gyroscope; microphone; xr-spatial-tracking; autoplay; encrypted-media; picture-in-picture"
+            },
+            {
+                id: 8,
+                title: "Deadly Descent",
+                category: "action",
+                poster: "https://playgama.com/cdn-cgi/imagedelivery/LN2S-4p3-GgZvEx3IPaKUA/79d71efd-42d5-48c6-4e91-532faf999f00/enlarged",
+                type: "iframe",
+                url: "https://playgama.com/export/game/deadly-descent",
+                attributes: "allow=fullscreen; accelerometer; camera; clipboard-read; clipboard-write; screen-wake-lock; speaker-selection; web-share; geolocation; gyroscope; microphone; xr-spatial-tracking; autoplay; encrypted-media; picture-in-picture"
+            },
+            {
+                id: 9,
+                title: "Hazmob FPS",
+                category: "trending",
+                poster: "https://playgama.com/cdn-cgi/imagedelivery/LN2S-4p3-GgZvEx3IPaKUA/c1f0c7c3-3611-4f93-49ae-3b779e216c00/enlarged",
+                type: "iframe",
+                url: "https://playgama.com/export/game/hazmob-fps-online-shooter",
+                attributes: "allow=fullscreen; accelerometer; camera; clipboard-read; clipboard-write; screen-wake-lock; speaker-selection; web-share; geolocation; gyroscope; microphone; xr-spatial-tracking; autoplay; encrypted-media; picture-in-picture"
+            },
+            {
+                id: 10,
+                title: "Chess 3D",
+                category: "strategy",
+                poster: "https://playpager.com/app-images/1x1/chess-1x1-300.avif",
+                type: "iframe",
+                url: "https://playpager.com/embed/chess/index.html"
+            },
+            {
+                id: 11,
+                title: "Checkers",
+                category: "strategy",
+                poster: "https://playpager.com/app-images/checkers/Checkers-1x1-300.avif",
+                type: "iframe",
+                url: "https://playpager.com/embed/checkers/index.html"
+            },
+            {
+                id: 12,
+                title: "Solitaire",
+                category: "strategy",
+                poster: "https://playpager.com/app-images/scorpion/scorpion-solitaire-300-1x1.avif",
+                type: "iframe",
+                url: "https://playpager.com/embed/solitaire/index.html"
+            },
+            {
+                id: 13,
+                title: "Chess",
+                category: "strategy",
+                poster: "https://roskomsvoboda.org/uploads/images/block_chesscom.jpg",
+                type: "iframe",
+                url: "https://chithruka.github.io/Chithruka/Games/Chess/home.html"
+            }
+        ];
+
+        // --- Render Functions ---
+
+        function createGameCard(game) {
+            return `
+                <div class="game-card" onclick="playGame(${game.id})">
+                    <img src="${game.poster}" alt="${game.title}">
+                    <div class="card-info">
+                        <div class="card-title">${game.title}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderRows() {
+            const trendingContainer = document.getElementById('row-trending');
+            const actionContainer = document.getElementById('row-action');
+            const strategyContainer = document.getElementById('row-strategy');
+
+            games.forEach(game => {
+                const cardHtml = createGameCard(game);
+                
+                // Logic to distribute games (simplified for demo)
+                if(game.category === 'trending') trendingContainer.innerHTML += cardHtml;
+                if(game.category === 'action') actionContainer.innerHTML += cardHtml;
+                if(game.category === 'strategy' || game.category === 'classic') strategyContainer.innerHTML += cardHtml;
+                
+                // Add everything to trending if the row is empty (fallback)
+                if (game.category !== 'trending' && trendingContainer.children.length < 3) {
+                     trendingContainer.innerHTML += cardHtml;
+                }
+            });
+        }
+
+        // --- Search Logic ---
+
+        const searchInput = document.getElementById('searchInput');
+        const mainView = document.getElementById('main-view');
+        const searchResults = document.getElementById('search-results');
+
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            
+            if (query.length > 0) {
+                mainView.classList.add('hidden');
+                searchResults.classList.add('active');
+                
+                const filteredGames = games.filter(game => game.title.toLowerCase().includes(query));
+                
+                if (filteredGames.length > 0) {
+                    searchResults.innerHTML = filteredGames.map(game => createGameCard(game)).join('');
+                    // Fix styling for grid items to look good in search view
+                    document.querySelectorAll('#search-results .game-card').forEach(el => {
+                        el.style.width = '100%'; 
+                    });
+                } else {
+                    searchResults.innerHTML = '<p style="text-align:center; width:100%; color: gray;">No games found matching "' + query + '"</p>';
+                }
+            } else {
+                resetHome();
+            }
+        });
+
+        function resetHome() {
+            searchInput.value = '';
+            mainView.classList.remove('hidden');
+            searchResults.classList.remove('active');
+        }
+
+        // --- Game Player Logic ---
+
+        function playGame(id) {
+            const game = games.find(g => g.id === id);
+            const modal = document.getElementById('gameModal');
+            const body = document.getElementById('modalBody');
+            
+            modal.style.display = "flex";
+            body.innerHTML = ''; // Clear previous
+
+            if (game.type === 'iframe') {
+                const attr = game.attributes ? game.attributes : '';
+                body.innerHTML = `<iframe src="${game.url}" ${attr} width="100%" height="100%" frameborder="0"></iframe>`;
+            } else if (game.type === 'script') {
+                // For script embeds, we inject the iframe code derived in the data object
+                body.innerHTML = game.code;
+            }
+        }
+
+        function closeGame() {
+            const modal = document.getElementById('gameModal');
+            const body = document.getElementById('modalBody');
+            
+            modal.style.display = "none";
+            body.innerHTML = ''; // Stop the game audio/video
+        }
+
+        // Navbar Scroll Effect
+        window.addEventListener('scroll', () => {
+            const header = document.getElementById('navbar');
+            if (window.scrollY > 50) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        });
+// Initialize
+renderRows();
+fetchFreeBrowserGames();
+
+// --- Free-To-Play API Logic ---
+async function fetchFreeBrowserGames() {
+    const f2pContainer = document.getElementById('row-f2p');
+    f2pContainer.innerHTML = '<div style="color: gray; padding: 20px;">Loading live games...</div>';
+
+    try {
+        // We use a public CORS proxy here because the F2P API sometimes blocks direct browser requests
+        const proxyUrl = 'https://corsproxy.io/?'; 
+        const targetUrl = encodeURIComponent('https://www.freetogame.com/api/games?platform=browser&sort-by=popularity');
+        
+        const response = await fetch(proxyUrl + targetUrl);
+        const data = await response.json();
+
+        f2pContainer.innerHTML = ''; // Clear loading text
+
+        // Grab the top 10 most popular free browser games
+        data.slice(0, 10).forEach(game => {
+            const cardHtml = `
+                <div class="game-card" onclick="window.open('${game.game_url}', '_blank')">
+                    <img src="${game.thumbnail}" alt="${game.title}">
+                    <div class="card-info">
+                        <div class="card-title">${game.title}</div>
+                    </div>
+                </div>
+            `;
+            f2pContainer.innerHTML += cardHtml;
+        });
+    } catch (error) {
+        console.error('Error fetching F2P games:', error);
+        f2pContainer.innerHTML = '<div style="color: #E50914; padding: 20px;">Failed to load games.</div>';
+    }
+}
+
+// --- RAWG Redirect + Plyr Logic ---
+async function showMoreInfo(gameId) {
+    const modal = document.getElementById('gameModal');
+    const body = document.getElementById('modalBody');
+    
+    modal.style.display = "flex";
+    body.innerHTML = '<div style="color:white; padding: 20px;">Loading game data...</div>';
+
+    try {
+        // Use the Phalcode redirect URL instead of api.rawg.io
+        // This service maps IDs to Steam data automatically
+        const baseUrl = "https://rawg2steam.phalco.de/api/games";
+        
+        const detailsRes = await fetch(`${baseUrl}/${gameId}`);
+        const game = await detailsRes.json();
+
+        // Note: The redirect service provides Steam-based data.
+        // It typically includes a "clip" or "trailers" field if available.
+        let mediaSection = `<img src="${game.background_image}" style="width:100%; height:400px; object-fit:cover;" />`;
+
+        if (game.clip && game.clip.clip) {
+            mediaSection = `
+                <video id="trailer-player" playsinline controls data-poster="${game.background_image}" style="width: 100%; height: 400px; object-fit: cover;">
+                    <source src="${game.clip.clip}" type="video/mp4" />
+                </video>
+            `;
+        }
+
+        body.innerHTML = `
+            <div style="width:100%; height:100%; display:flex; flex-direction:column; background:var(--netflix-dark); color:white; overflow-y:auto;">
+                ${mediaSection}
+                <div style="padding: 30px;">
+                    <h2 style="font-family:'Bebas Neue', sans-serif; font-size:3.5rem; color:var(--netflix-red); margin-bottom: 10px; line-height: 1;">${game.name}</h2>
+                    <div style="display: flex; gap: 15px; margin-bottom: 20px; font-weight: bold; color: #46d369;">
+                        <span>${game.released ? game.released.split('-')[0] : 'N/A'}</span>
+                        <span>⭐ ${game.rating || 'N/A'} / 5</span>
+                    </div>
+                    <p style="color:var(--text-gray); font-size: 1.1rem; line-height: 1.5;">${game.description_raw || 'No description available.'}</p>
+                </div>
+            </div>
+        `;
+
+        if (game.clip && game.clip.clip) {
+            new Plyr('#trailer-player', { autoplay: true, muted: false });
+        }
+
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        body.innerHTML = '<div style="color:white; padding: 20px;">Error loading game details. Using a redirect service...</div>';
+    }
+} 
+// --- MOBILE MORE DRAWER LOGIC ---
+function toggleMoreMenu() {
+    const drawer = document.getElementById('mobile-more-drawer');
+    const moreBtn = document.getElementById('more-menu-btn');
+    drawer.classList.toggle('open');
+    moreBtn.classList.toggle('active');
+}
+
+// Close drawer when clicking anywhere outside
+document.addEventListener('click', function(e) {
+    const drawer = document.getElementById('mobile-more-drawer');
+    const moreBtn = document.getElementById('more-menu-btn');
+    
+    if (drawer && drawer.classList.contains('open')) {
+        if (!drawer.contains(e.target) && !moreBtn.contains(e.target)) {
+            drawer.classList.remove('open');
+            moreBtn.classList.remove('active'); 
+        }
+    }
+}); </script>
+    <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
+</body>
+</html>

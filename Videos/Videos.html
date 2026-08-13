@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C|XXX</title>
+    <link href='https://chithruka.blogspot.com/favicon.ico' rel='shortcut icon' type='image/x-icon'/>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css">
+      <script defer src="https://kit.fontawesome.com/df13f08a1d.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="../output.css">
+
+    <style>
+        /* --- Root Variables --- */
+        :root {
+            --primary-red: #E50914;
+            --bg-black: #141414;
+            --bg-dark: #0f0f0f;
+            --text-gray: #b3b3b3;
+            --glass-bg: rgba(20, 20, 20, 0.85);
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        /* --- Global Reset --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; outline: none; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-black); }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary-red); }
+
+        body {
+            background-color: var(--bg-black);
+            color: white;
+            font-family: 'Montserrat', sans-serif;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+/* --- Header & Navigation --- */
+        header {
+            position: fixed; top: 0; width: 100%; height: 70px;
+            padding: 0 4%;
+            display: flex; align-items: center; justify-content: space-between;
+            background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, transparent 100%);
+            z-index: 1000;
+            transition: background 0.4s ease;
+        }
+        header.scrolled { background-color: var(--bg-black); box-shadow: 0 4px 30px rgba(0,0,0,0.5); }
+
+        .logo {
+            font-family: 'Bebas Neue', sans-serif; font-size: 2.2rem;
+            color: var(--primary-red); letter-spacing: 2px;
+            text-shadow: 0 0 15px rgba(229, 9, 20, 0.6);
+            cursor: pointer; text-decoration: none;
+            transition: transform 0.3s;
+        }
+        .logo:hover { transform: scale(1.05); }
+
+        .nav-links { display: flex; gap: 25px; margin-left: 40px; }
+        .nav-links a {
+            color: var(--text-gray); font-size: 0.95rem; font-weight: 500;
+            text-decoration: none; transition: color 0.3s;
+        }
+        .nav-links a:hover { color: white; }
+
+        /* Mobile Menu */
+        /* Mobile Menu Overlay - FIXED Z-INDEX */
+#mobile-menu-overlay {
+    position: fixed; 
+    top: 70px; 
+    left: 0; 
+    right: 0;
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    padding: 20px;
+    display: none; 
+    flex-direction: column; 
+    gap: 15px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    animation: slideDown 0.3s ease-out;
+    z-index: 1001; /* This must be higher than the header (1000) */
+}
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        #mobile-menu-overlay a {
+            font-size: 1.1rem; color: white; padding: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        /* --- Search & Avatar --- */
+        .search-box {
+            background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.2);
+            padding: 6px 12px; border-radius: 20px;
+            display: flex; align-items: center; transition: var(--transition);
+        }
+        .search-box:focus-within { border-color: white; background: rgba(0,0,0,0.9); }
+        .search-box input {
+            background: transparent; border: none; color: white;
+            padding-left: 10px; width: 0; transition: width 0.4s;
+        }
+        .search-box:hover input, .search-box input:focus { width: 220px; }
+
+        .avatar {
+            width: 36px; height: 36px; border-radius: 6px;
+            background: url('https://upload.wikimedia.org/wikipedia/commons/0/0b/Netflix-avatar.png') center/cover;
+            cursor: pointer; border: 2px solid transparent; transition: var(--transition);
+        }
+        .avatar:hover { border-color: white; }
+
+        /* --- Hero Section --- */
+        .hero {
+            height: 75vh; width: 100%; position: relative;
+            background-image: url('https://thumb-cdn77.xvideos-cdn.com/1962f4fb-b4af-4898-afe9-91d9a91c84f7/0/xv_22_p.jpg');
+            background-size: cover; background-position: center;
+            mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+        }
+        .hero-overlay {
+            position: absolute; inset: 0;
+            background: radial-gradient(circle at 70% 20%, transparent 0%, var(--bg-black) 90%),
+                        linear-gradient(to right, var(--bg-black) 0%, transparent 60%);
+            display: flex; flex-direction: column; justify-content: center; padding-left: 5%;
+        }
+        .hero-title {
+            font-family: 'Bebas Neue', sans-serif; font-size: 5rem; line-height: 0.9;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.8);
+        }
+        .hero-subtitle { color: var(--primary-red); font-size: 3rem; margin-bottom: 1rem; }
+        
+        .btn {
+            padding: 10px 32px; border-radius: 4px; font-weight: 700; font-size: 1.1rem;
+            cursor: pointer; display: inline-flex; align-items: center; gap: 10px;
+            transition: var(--transition); border: none;
+        }
+        .btn-play { background: white; color: black; }
+        .btn-play:hover { background: rgba(255,255,255,0.85); transform: translateY(-2px); }
+        .btn-info { background: rgba(109, 109, 110, 0.7); color: white; backdrop-filter: blur(5px); }
+        .btn-info:hover { background: rgba(109, 109, 110, 0.5); transform: translateY(-2px); }
+
+        /* --- Grid Layout --- */
+        .infinite-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 16px; padding: 20px 4%; margin-top: -80px; position: relative; z-index: 10;
+        }
+
+        .poster {
+            position: relative; aspect-ratio: 16/9;
+            background: #1a1a1a; border-radius: 6px; overflow: hidden;
+            cursor: pointer; transition: var(--transition);
+            border: 1px solid rgba(255,255,255,0.05);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        .poster:hover {
+            transform: scale(1.05); z-index: 20;
+            border-color: rgba(255,255,255,0.5);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+        .poster img { width: 100%; height: 100%; object-fit: contain; padding: 15px; }
+        
+        .poster-overlay {
+            position: absolute; inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 60%);
+            display: flex; align-items: flex-end; padding: 10px;
+            opacity: 0.9;
+        }
+        .poster-title { font-size: 0.9rem; font-weight: 600; text-shadow: 0 2px 4px black; }
+
+        .premium-badge {
+            position: absolute; top: 8px; right: 8px;
+            background: #22c55e;
+            color: white; font-size: 0.65rem; padding: 3px 8px;
+            border-radius: 3px; font-weight: 800; letter-spacing: 0.5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+
+        /* --- Player Overlay --- */
+        #player-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: black; z-index: 2000; display: none; flex-direction: column;
+        }
+        .player-header {
+            padding: 15px 4%; display: flex; justify-content: space-between; align-items: center;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent);
+        }
+        .back-btn {
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1);
+            color: white; font-size: 1rem; padding: 8px 20px; border-radius: 30px;
+            cursor: pointer; display: flex; align-items: center; gap: 8px;
+            transition: var(--transition); backdrop-filter: blur(5px);
+        }
+        .back-btn:hover { background: rgba(255,255,255,0.2); transform: translateX(-3px); }
+        
+        #video-container { flex: 1; width: 100%; display: flex; align-items: center; justify-content: center; }
+
+        /* --- Footer --- */
+        footer {
+            margin-top: 50px; padding: 40px 4%;
+            background: rgba(0,0,0,0.8); text-align: center;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+        .socials { font-size: 1.5rem; display: flex; justify-content: center; gap: 30px; margin-bottom: 20px; }
+        .socials i:hover { color: white; transform: scale(1.1); transition: 0.3s; }
+
+        /* --- Responsive Queries --- */
+        @media (max-width: 768px) {
+            header { height: 65px; padding: 0 5%; background: rgba(0,0,0,0.95); }
+            .nav-links { display: none; }
+            #mobile-menu-toggle { display: block; }
+            
+            .hero { height: 55vh; }
+            .hero-title { font-size: 3rem; }
+            .hero-subtitle { font-size: 1.5rem; }
+            .btn { font-size: 0.9rem; padding: 8px 16px; }
+
+            .infinite-grid {
+                grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+                gap: 12px; margin-top: -20px;
+            }
+            .poster { aspect-ratio: 16/10; }
+            .poster-title { font-size: 0.75rem; }
+            
+            #search-input { width: 140px; }
+            
+            /* Player Adjustments */
+            .player-header { padding: 10px 15px; }
+            .back-btn { font-size: 0.85rem; padding: 6px 14px; }
+        }
+        /* Fallback Icon Styling */
+.poster-fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+    font-size: 3rem;
+    color: rgb(220 38 38 / var(--tw-text-opacity, 1));
+    background: #1a1a1a;
+}
+/* Info Modal Styles */
+.info-modal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 600px;
+    background: #181818;
+    border-radius: 12px;
+    z-index: 2000;
+    box-shadow: 0 0 40px rgba(0,0,0,0.8);
+    border: 1px solid #333;
+    padding: 2rem;
+    color: white;
+}
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.85);
+    z-index: 1999;
+}
+.info-header {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.5rem;
+    color: var(--primary-red);
+    margin-bottom: 1rem;
+    border-bottom: 2px solid #333;
+}
+.info-body { font-size: 0.95rem; line-height: 1.6; color: #ccc; }
+/* Ensure the player background is always black */
+.video-js {
+    background-color: #000 !important;
+}
+
+/* Hide the big play button during the initial load to stop the "YouTube icon" flicker */
+.vjs-custom-loading .vjs-big-play-button {
+    display: none !important;
+}
+
+/* Customize the loading spinner to match your red theme */
+.vjs-loading-spinner {
+    border: 3px solid rgba(229, 9, 20, 0.5) !important;
+    border-top-color: #E50914 !important;
+}
+.live-badge {
+    position: absolute; top: 8px; left: 8px;
+    background: linear-gradient(45deg, var(--primary-red), #b20710); /* Green color for Live */
+    color: white; font-size: 0.65rem; padding: 3px 8px;
+    border-radius: 3px; font-weight: 800; letter-spacing: 0.5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    z-index: 5;
+}
+/* --- Age Verification Modal --- */
+body.no-scroll {
+    overflow: hidden;
+}
+
+#age-verify-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(20, 20, 20, 0.6);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    z-index: 99999; /* Highest priority to cover everything */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.age-verify-modal {
+    background: #141414;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 2.5rem;
+    max-width: 550px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 10px 50px rgba(0,0,0,0.9);
+    color: white;
+}
+
+.age-verify-modal h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3rem;
+    color: var(--primary-red);
+    margin-bottom: 0.5rem;
+    letter-spacing: 1px;
+}
+
+.age-verify-modal h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: white;
+}
+
+.age-verify-modal p {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--text-gray);
+    margin-bottom: 2rem;
+}
+
+.age-verify-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.btn-enter {
+    background: var(--primary-red);
+    color: white;
+    padding: 14px 24px;
+    border: none;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-enter:hover {
+    background: #b20710;
+    transform: translateY(-2px);
+}
+
+.btn-exit {
+    background: transparent;
+    color: var(--text-gray);
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 14px 24px;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-exit:hover {
+    background: rgba(255,255,255,0.1);
+    color: white;
+    border-color: white;
+}
+    </style>
+</head>
+<body>
+      <div id="age-verify-overlay">
+        <div class="age-verify-modal">
+            <h2>This is an adult website</h2>
+            <h3>Notice to Users</h3>
+            <p>This website contains age-restricted materials including nudity and explicit depictions of sexual activity. By entering, you affirm that you are at least 18 years of age or the age of majority in the jurisdiction you are accessing the website from and you consent to viewing sexually explicit content.</p>
+            <div class="age-verify-buttons">
+                <button class="btn-enter" onclick="enterSite()">I am 18 or older - Enter</button>
+                <button class="btn-exit" onclick="exitSite()">I am under 18 - Exit</button>
+            </div>
+        </div>
+    </div>
+    <header id="navbar">
+        <a href="#" class="logo" onclick="resetPage(event)">Corn<i class="fa-solid fa-xmarks-lines"></i></a>
+        
+        <nav class="nav-links">
+            <a href="pornhub.com">PH</a>
+        </nav>
+
+        <div style="display: flex; align-items: center; gap: 15px; margin-left: auto;">
+            <div class="search-box">
+                <i class="fas fa-search" style="color: white; font-size: 0.9rem;"></i>
+                <input type="text" id="search-input" placeholder="Search...">
+            </div>
+            <div class="avatar" onclick="toggleMobileMenu()"></div>
+        </div>
+    </header>
+
+    <div id="mobile-menu-overlay">
+        <a href="pornhub.com">Movies</a>
+        <a href="pornhub.com/TV/tv.html">Live TV</a>
+        <a href="pornhub.com/Radio/radio.html">Live Radio</a>
+        <a href="#" onclick="toggleMobileMenu()" style="color: var(--primary-red); font-size: 0.9rem;">Close Menu</a>
+    </div>
+
+    <div class="hero">
+        <div class="hero-overlay">
+            <h1 class="hero-title text-white font-extrabold mb-2" style="font-family: 'Bebas Neue', sans-serif;">LIVE</i></h1>
+            <h2 class="hero-subtitle font-bold text-red-600 mb-4" style="font-family: 'Bebas Neue', sans-serif;">UNLIMITED</h2>
+            <p class="text-gray-300 text-sm md:text-lg max-w-lg mb-6 leading-relaxed drop-shadow-md">
+                Stream in High definition, zero buffering.
+            </p>
+            <div class="flex gap-4">
+                <button class="btn btn-play shadow-lg" onclick="playRandom()">
+                    <i class="fa-solid fa-shuffle"></i> Random
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="main-content">
+        <div class="flex justify-center mt-12 mb-12">
+            <div class="w-10 h-10 border-4 border-gray-600 border-t-red-600 rounded-full animate-spin"></div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="socials text-gray-400">
+           <a href="https://www.youtube.com/live"><i class="fab fa-youtube cursor-pointer transition hover:text-white"></i></a>
+           <a href="https://www.twitch.tv/"><i class="fa-brands fa-twitch cursor-pointer transition hover:text-white"></i></a>
+           <a href="https://www.facebook.com/watch"><i class="fa-brands fa-facebook cursor-pointer transition hover:text-white"></i></a>
+           <a href="https://www.dailymotion.com/search/tv/lives"><i class="fa-brands fa-dailymotion cursor-pointer transition hover:text-white"></i></a>
+        <a href="https://vimeo.com/search?type=clip&q=tv&live=now"><i class="fa-brands fa-vimeo cursor-pointer transition hover:text-white"></i></a>
+        </div>
+        <p class="text-xs text-gray-600 font-medium">
+            &copy; 2026 Chithruka. All Rights Reserved.
+        </p>
+    </footer>
+
+    <div id="player-overlay">
+        <div class="player-header">
+            <button class="back-btn" onclick="closePlayer()">
+                <i class="fas fa-arrow-left"></i> Back
+            </button>
+            <span id="player-title" class="font-bold text-lg text-gray-200 tracking-wide">Channel Name</span>
+            <div style="width: 20px;"></div>
+        </div>
+        <div id="video-container"></div>
+    </div>
+<div id="modal-overlay" class="modal-overlay" onclick="closeInfo()"></div>
+<div id="info-modal" class="info-modal">
+    <div class="flex justify-between items-start">
+        <h2 id="modal-title" class="info-header">Loading...</h2>
+        <button onclick="closeInfo()" class="text-white text-2xl">&times;</button>
+    </div>
+</div>
+<script>
+  // --- Age Verification Functions ---
+// Disable scrolling on initial load
+document.body.classList.add('no-scroll');
+
+function enterSite() {
+    // Hide the overlay and restore scrolling
+    document.getElementById('age-verify-overlay').style.display = 'none';
+    document.body.classList.remove('no-scroll');
+}
+
+function exitSite() {
+    // Redirect to Google
+    window.location.href = 'https://www.google.com';
+}
+
+  // --- State ---
+let apiChannels = []; 
+let allChannels = []; 
+let filteredChannels = []; 
+let displayedCount = 40; 
+let player = null;
+
+// --- M3U Playlist URLs ---
+const M3U_URLS = [
+    'https://chithruka.github.io/Chithruka/Videos/playlist.m3u8',
+];
+
+// --- Premium Data ---
+const premiumChannels = [
+    { 
+        name: "Wicked - Brunette Babe Gets A Good Dicking From The DIRECTOR HIMSELF", 
+        type: "iframe", 
+        src: "https://www.pornhub.com/embed/66673ee153eb7", 
+        logo: "https://ei.phncdn.com/videos/202406/10/453641491/original/(m=eaAaGwObaaaa)(mh=oM3mh3L-B1g8JA40)12.jpg", 
+        isPremium: false 
+    },
+    { 
+        name: "Intense Getting Raped By a Dog", 
+        type: "hls", 
+        url: "https://vidcont.life/upd2/ansexpornnet/5184___bee7d07cf2287108418d3fd9d182bed7.mp4", 
+        logo: "", 
+        isPremium: false 
+    },{ 
+        name: "Premium Live", 
+        type: "iframe", 
+        src: "https://dlhd.pk/stream/stream-516.php", 
+        logo: "", 
+        isPremium: true
+    }
+];
+
+// --- Core Functions ---
+function resetPage(e) {
+    if(e) e.preventDefault();
+    document.getElementById('search-input').value = '';
+    filteredChannels = [...allChannels];
+    renderGrid(filteredChannels.slice(0, 40), true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function toggleMobileMenu() {
+    const menu = document.getElementById('mobile-menu-overlay');
+    menu.style.display = (menu.style.display === 'flex') ? 'none' : 'flex';
+}
+
+function renderGrid(channels, clear = false) {
+    const container = document.getElementById('main-content');
+    if (clear) container.innerHTML = '<div id="infinite-grid" class="infinite-grid"></div>';
+    
+    const grid = document.getElementById('infinite-grid');
+    if (!grid) return;
+
+    channels.forEach(channel => {
+        const poster = document.createElement('div');
+        poster.className = 'poster';
+        poster.onclick = () => openPlayer(channel);
+
+        const logoSrc = channel.logo || "";
+        
+        // --- Badge Logic ---
+        let premiumBadge = channel.isPremium ? '<span class="premium-badge">Premium</span>' : '';
+        
+        // Check if the URL exists and ends with .m3u8 to show the Live badge
+        let isStream = channel.url && channel.url.toLowerCase().includes('.m3u8');
+        let liveBadge = isStream ? '<span class="live-badge"><i class="fa-solid fa-circle text-[6px] mr-1 mb-[1px]"></i> LIVE</span>' : '';
+        
+        poster.innerHTML = `
+            ${premiumBadge}
+            ${liveBadge}
+            <img src="${logoSrc}" 
+                 loading="lazy" 
+                 style="${!logoSrc ? 'display:none' : ''}"
+                 onerror="handleImageError(this)">
+            <div class="poster-fallback" style="${logoSrc ? 'display:none' : 'display:flex'}">
+                <i class="fa-solid fa-xmarks-lines"></i>
+            </div>
+            <div class="poster-overlay">
+                <div class="poster-title truncate w-full text-white drop-shadow-md">${channel.name}</div>
+            </div>
+        `;
+        grid.appendChild(poster);
+    });
+}
+
+
+function handleImageError(img) {
+    const poster = img.parentElement;
+    const fallback = poster.querySelector('.poster-fallback');
+    img.style.display = 'none';
+    if (fallback) fallback.style.display = 'flex';
+}
+
+// Updated to support both HLS (.m3u8) and MP4 (.mp4) from playlists
+async function fetchChannels() {
+    for (const url of M3U_URLS) {
+        try {
+            const response = await fetch(url);
+            const text = await response.text();
+            const lines = text.split('\n');
+            let current = {};
+            for (let line of lines) {
+                line = line.trim();
+                if (line.startsWith('#EXTINF')) {
+                    const logoMatch = line.match(/tvg-logo="([^"]*)"/);
+                    const name = line.split(',').pop();
+                    current = { name, logo: logoMatch ? logoMatch[1] : '', type: 'hls' };
+                } else if (line.startsWith('http')) {
+                    current.url = line;
+                    // Recognize both streaming and static video file extensions
+                    if (current.url.includes('.m3u8') || current.url.includes('.mp4')) {
+                        apiChannels.push({ ...current });
+                    }
+                }
+            }
+        } catch (e) {
+            console.error(`Failed to fetch playlist: ${url}`, e);
+        }
+    }
+
+    allChannels = [...premiumChannels, ...apiChannels];
+    filteredChannels = [...allChannels];
+    renderGrid(filteredChannels.slice(0, 40), true);
+}
+
+// --- Search ---
+document.getElementById('search-input').addEventListener('input', (e) => {
+    const query = e.target.value.toLowerCase();
+    filteredChannels = allChannels.filter(c => c.name.toLowerCase().includes(query));
+    displayedCount = 40; 
+    renderGrid(filteredChannels.slice(0, 40), true);
+});
+
+// --- Player ---
+function openPlayer(channel) {
+    const overlay = document.getElementById('player-overlay');
+    const vidContainer = document.getElementById('video-container');
+    const title = document.getElementById('player-title');
+
+    title.innerText = channel.name;
+    overlay.style.display = 'flex';
+    vidContainer.innerHTML = ''; // Clear previous player
+
+    if (channel.type === 'iframe') {
+        vidContainer.innerHTML = `<iframe src="${channel.src}" width="100%" height="100%" frameborder="0" allowfullscreen></iframe>`;
+    } 
+    else if (channel.type === 'hls') {
+        // 1. Create the Shaka Player structure
+        const videoHtml = `
+            <div id="shaka-container" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background-color: #000;">
+                <video id="main-player" autoplay style="width: 100%; height: 100%;"></video>
+            </div>
+        `;
+        vidContainer.innerHTML = videoHtml;
+
+        const video = document.getElementById('main-player');
+        const videoContainer = document.getElementById('shaka-container');
+
+        // 2. Install polyfills and check browser support
+        shaka.polyfill.installAll();
+
+        if (shaka.Player.isBrowserSupported()) {
+            // 3. Initialize player and UI
+            player = new shaka.Player(video);
+            const ui = new shaka.ui.Overlay(player, videoContainer, video);
+
+            // Error handling
+            player.addEventListener('error', (event) => {
+                console.error('Shaka Error:', event.detail);
+            });
+
+            // 4. Load the stream
+            player.load(channel.url).catch((e) => {
+                console.error('Error loading video', e);
+            });
+        } else {
+            alert('Your browser does not support Shaka Player.');
+        }
+    }
+}
+
+
+function closePlayer() {
+    const overlay = document.getElementById('player-overlay');
+    const vidContainer = document.getElementById('video-container');
+
+    overlay.style.display = 'none';
+
+    if (player) {
+        try {
+            // Properly destroy the Shaka Player instance
+            player.destroy(); 
+        } catch(e) { 
+            console.error('Error destroying player:', e); 
+        }
+        player = null;
+    }
+
+    vidContainer.innerHTML = '';
+}
+
+
+function playRandom() {
+    if (allChannels.length > 0) {
+        const random = allChannels[Math.floor(Math.random() * allChannels.length)];
+        openPlayer(random);
+    }
+}
+
+// --- Infinite Scroll ---
+window.addEventListener('scroll', () => {
+    if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 800) {
+        if (displayedCount < filteredChannels.length) {
+            const nextBatch = filteredChannels.slice(displayedCount, displayedCount + 20);
+            renderGrid(nextBatch);
+            displayedCount += 20;
+        }
+    }
+});
+
+// --- Header scroll effect ---
+window.addEventListener('scroll', () => {
+    document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 50);
+});
+
+// Initialize
+fetchChannels();
+</script>
+</body>
+</html>
